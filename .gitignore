@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+ENV/
+
+# Editor
+.vscode/
+.idea/
+
+# Downloaded / generated media
+*.wav
+*.mp3
+*.vtt
+
+# Logs and intermediates
+*.log
+my_log*.txt
+process_log.txt
+result.txt
+intermediate_data.json
+temp_chunk_*.wav
+*:Zone.Identifier
+
+# OS
+.DS_Store
+Thumbs.db
