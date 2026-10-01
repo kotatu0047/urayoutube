@@ -8,8 +8,6 @@ YouTube動画の日本語字幕を取得し、VOICEVOX で美少女ボイスに�
 voicevox/           VTT → VOICEVOX 変換
   vtt_to_voicevox.py
   speakers.py       話者ID一覧
-whisper_project/    字幕がない場合の Whisper 文字起こし
-  run_whisper.py
 ```
 
 ## 事前インストール（環境に合わせて各自）
@@ -23,11 +21,22 @@ whisper_project/    字幕がない場合の Whisper 文字起こし
 | [Ollama](https://ollama.com/) | 字幕の校正・読み上げパラメータ推定 | `ollama pull llama3` など、スクリプトが呼ぶモデルも入れておく |
 | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | YouTube 字幕の取得 | |
 | Python 3 | 変換スクリプト | `venv` 推奨 |
-| （任意）CUDA / 対応 GPU | Whisper・VOICEVOX GPU 版 | 無い場合は CPU で可（遅い） |
+| （任意）CUDA / 対応 GPU | VOICEVOX GPU 版 | 無い場合は CPU で可（遅い） |
 
 Windows + WSL2 想定。パスやインストール方法は OS ごとに違うので、公式手順に従うこと。
 
 ## 準備
+
+`setup.sh` / `start.sh` / `update.sh` は製作者の PC（Windows + WSL2 想定）向けの参考実装です。  
+環境やパス・入れ方が違う前提なので、**中身を確認したうえで、自分のマシンに合わせて改変してから実行してください。** 無改造のまま動く保証はありません。
+
+初回セットアップ:
+
+```bash
+./setup.sh              # venv + yt-dlp 確認 + VOICEVOX イメージ + Ollama モデル
+./setup.sh --cpu        # VOICEVOX は CPU 版イメージを取得
+./setup.sh --python-only  # Python venv のみ
+```
 
 依存の更新:
 
@@ -64,19 +73,10 @@ docker run --rm -it -p 50021:50021 voicevox/voicevox_engine:cpu-ubuntu20.04-late
 ollama serve
 ```
 
-依存関係:
+依存関係（`./setup.sh` が自動で行う。手動なら）:
 
 ```bash
 cd voicevox
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-Whisper を使う場合:
-
-```bash
-cd whisper_project
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt

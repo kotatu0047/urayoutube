@@ -15,7 +15,7 @@ Usage: ./update.sh [options]
 
   （引数なし）  Python 依存 + yt-dlp を更新
   --all         すべて更新（Python / yt-dlp / VOICEVOX Docker / Ollama モデル）
-  --python      voicevox / whisper_project の pip パッケージを更新
+  --python      voicevox の pip パッケージを更新
   --yt-dlp      yt-dlp を更新
   --docker      VOICEVOX Engine の Docker イメージを pull
   --ollama      Ollama モデルを pull（既定: llama3、OLLAMA_MODEL で変更可）
@@ -44,7 +44,6 @@ update_venv() {
   local dir="$1"
   local req="${dir}/requirements.txt"
   local py="${dir}/venv/bin/python"
-  local pip="${dir}/venv/bin/pip"
 
   echo
   echo "=== Python: ${dir} ==="
@@ -54,17 +53,19 @@ update_venv() {
     return 0
   fi
 
-  if [[ ! -x "$py" ]]; then
-    echo "[info] venv が無いので作成します"
+  # shebang が壊れている古い venv も、python -m pip で動くか確認する
+  if [[ ! -e "$py" ]] || ! "$py" -c "import sys" >/dev/null 2>&1 || ! "$py" -m pip --version >/dev/null 2>&1; then
+    echo "[info] venv を作り直します"
+    rm -rf "${dir}/venv"
     python3 -m venv "${dir}/venv"
   fi
 
-  echo "[run] pip install -U pip"
-  "$pip" install -U pip
-  echo "[run] pip install -U -r requirements.txt"
-  "$pip" install -U -r "$req"
+  echo "[run] python -m pip install -U pip"
+  "$py" -m pip install -U pip
+  echo "[run] python -m pip install -U -r requirements.txt"
+  "$py" -m pip install -U -r "$req"
   echo "[ok] ${dir} のパッケージを更新しました"
-  "$pip" list --format=columns | grep -E '^(Package|-----|requests|janome|openai-whisper|torch|tiktoken|numpy) ' || true
+  "$py" -m pip list --format=columns | grep -E '^(Package|-----|requests|janome) ' || true
 }
 
 echo "=== urayoutube アップデート ==="
@@ -72,19 +73,22 @@ echo "プロジェクト: ${ROOT}"
 
 if [[ "$DO_PYTHON" -eq 1 ]]; then
   update_venv "${ROOT}/voicevox"
-  update_venv "${ROOT}/whisper_project"
 fi
 
 if [[ "$DO_YTDLP" -eq 1 ]]; then
   echo
   echo "=== yt-dlp ==="
   if command -v yt-dlp >/dev/null 2>&1; then
-    # pip / 公式バイナリ / その他 どの入れ方でも -U を試す
-    if yt-dlp -U; then
+    if command -v pipx >/dev/null 2>&1 && pipx list 2>/dev/null | grep -q 'package yt-dlp'; then
+      pipx upgrade yt-dlp
+      echo "[ok] yt-dlp (pipx): $(yt-dlp --version)"
+    elif yt-dlp -U; then
       echo "[ok] yt-dlp: $(yt-dlp --version)"
+    elif python3 -m pip install --user -U yt-dlp; then
+      echo "[ok] yt-dlp (pip --user): $(yt-dlp --version)"
     else
-      echo "[warn] yt-dlp -U に失敗。入れ方に合わせて手動更新してください。"
-      echo "       例: pip install -U yt-dlp"
+      echo "[warn] yt-dlp の自動更新に失敗。入れ方に合わせて手動更新してください。"
+      echo "       例: pipx upgrade yt-dlp"
       echo "           または https://github.com/yt-dlp/yt-dlp の手順"
     fi
   else
