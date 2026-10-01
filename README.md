@@ -12,9 +12,41 @@ whisper_project/    字幕がない場合の Whisper 文字起こし
   run_whisper.py
 ```
 
+## 事前インストール（環境に合わせて各自）
+
+このプロジェクト自体には含まれないので、使うマシンに合わせて入れておく。
+
+| もの | 用途 | メモ |
+|------|------|------|
+| [Docker](https://docs.docker.com/get-docker/) | VOICEVOX Engine の実行 | WSL2 なら Docker Desktop の WSL 連携を有効に |
+| [VOICEVOX Engine](https://github.com/VOICEVOX/voicevox_engine) | 音声合成（ボイロ） | 通常は Docker イメージで起動。GPU なら NVIDIA Container Toolkit も |
+| [Ollama](https://ollama.com/) | 字幕の校正・読み上げパラメータ推定 | `ollama pull llama3` など、スクリプトが呼ぶモデルも入れておく |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | YouTube 字幕の取得 | |
+| Python 3 | 変換スクリプト | `venv` 推奨 |
+| （任意）CUDA / 対応 GPU | Whisper・VOICEVOX GPU 版 | 無い場合は CPU で可（遅い） |
+
+Windows + WSL2 想定。パスやインストール方法は OS ごとに違うので、公式手順に従うこと。
+
 ## 準備
 
-VOICEVOX Engine（GPU 推奨）:
+依存の更新:
+
+```bash
+./update.sh              # Python パッケージ + yt-dlp
+./update.sh --all        # 上記 + VOICEVOX Docker イメージ + Ollama モデル
+./update.sh --python     # venv 内の pip のみ
+./update.sh --docker     # VOICEVOX イメージのみ
+./update.sh --ollama     # llama3 など（OLLAMA_MODEL で変更可）
+```
+
+依存サービス（VOICEVOX + Ollama）の起動:
+
+```bash
+./start.sh          # GPU 版 VOICEVOX（デフォルト）
+./start.sh --cpu    # CPU 版
+```
+
+手動で起動する場合（GPU 推奨）:
 
 ```bash
 docker run --rm --gpus all -p 50021:50021 voicevox/voicevox_engine:nvidia-ubuntu20.04-latest
